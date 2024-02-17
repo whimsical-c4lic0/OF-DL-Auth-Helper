@@ -54,7 +54,7 @@ jobs:
           artifactsDir: dist
 
       - name: Upload Firefox extension to AMO
-        uses: birchill/amo-upload@v1
+        uses: birchill/amo-upload@v1.0.0
         with:
           addon_id: ${{ secrets.FIREFOX_EXTENSION_ID }}
           amo_jwt_iss: ${{ secrets.FIREFOX_JWT_ISSUER }}
