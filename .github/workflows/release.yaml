@@ -90,3 +90,4 @@ jobs:
           files: |
             dist/OF-DL_Auth_Helper-firefox-${{ steps.firefox_version.outputs.value }}.xpi
             dist/OF-DL_Auth_Helper-chrome-${{ steps.chrome_version.outputs.value }}.crx
+            dist/OF-DL_Auth_Helper-chrome-${{ steps.chrome_version.outputs.value }}.zip
