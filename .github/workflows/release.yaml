@@ -37,7 +37,7 @@ jobs:
 
       - name: Prepare for Firefox build
         run: |
-          ./bin/prepare_build.sh firefox
+          bash bin/prepare_build.sh firefox
           mkdir -p dist
 
       - name: Firefox build
@@ -63,7 +63,7 @@ jobs:
 
       - name: Prepare for Chrome build
         run: |
-          ./bin/prepare_build.sh chrome
+          bash bin/prepare_build.sh chrome
 
       - name: Chrome pack extension
         uses: cardinalby/webext-buildtools-pack-extension-dir-action@v1
