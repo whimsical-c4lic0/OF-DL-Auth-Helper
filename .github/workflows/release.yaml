@@ -53,17 +53,13 @@ jobs:
           source: build
           artifactsDir: dist
 
-      - name: Sign Firefox extension
-        uses: kewisch/action-web-ext@v1
-        id: firefox_sign
+      - name: Upload Firefox extension to AMO
+        uses: birchill/amo-upload@v1
         with:
-          cmd: sign
-          source: ${{ steps.firefox_build.outputs.target }}
-          apiKey: ${{ secrets.FIREFOX_JWT_ISSUER }}
-          apiSecret: ${{ secrets.FIREFOX_JWT_SECRET }}
-
-      - name: Rename Firefox extension
-        run: mv ${{ steps.firefox_sign.outputs.target }} dist/OF-DL_Auth_Helper-firefox-${{ steps.firefox_version.outputs.value }}.xpi
+          addon_id: ${{ secrets.FIREFOX_EXTENSION_ID }}
+          amo_jwt_iss: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          amo_jwt_secret: ${{ secrets.FIREFOX_JWT_SECRET }}
+          addon_file: ${{ steps.firefox_build.outputs.target }}
 
       - name: Prepare for Chrome build
         run: |
@@ -87,7 +83,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          draft: true
+          fail_on_unmatched_files: true
           files: |
-            dist/OF-DL_Auth_Helper-firefox-${{ steps.firefox_version.outputs.value }}.xpi
             dist/OF-DL_Auth_Helper-chrome-${{ steps.chrome_version.outputs.value }}.crx
             dist/OF-DL_Auth_Helper-chrome-${{ steps.chrome_version.outputs.value }}.zip
