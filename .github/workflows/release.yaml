@@ -7,7 +7,7 @@ on:
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, ubuntu-latest]
     steps:
       - uses: actions/checkout@v2
 
@@ -26,12 +26,12 @@ jobs:
       - name: Check extension versions
         run: |
           if [ "${{ steps.firefox_version.outputs.value }}" != "${{ steps.chrome_version.outputs.value }}" ]; then
-            echo "Extension versions do not match"
+            echo "Extension versions do not match (${{ steps.firefox_version.outputs.value }} != ${{ steps.chrome_version.outputs.value }})"
             exit 1
           fi
 
           if [ "v${{ steps.firefox_version.outputs.value }}" != "${{ github.ref }}" ]; then
-            echo "Tag does not match extension version"
+            echo "Tag (${{ github.ref }}) does not match extension version (v${{ steps.firefox_version.outputs.value }})"
             exit 1
           fi
 
