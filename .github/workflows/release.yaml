@@ -40,23 +40,27 @@ jobs:
           bash bin/prepare_build.sh firefox
           mkdir -p dist
 
+      - name: Add Firefox extension id to manifest
+        uses: sergeysova/jq-action@v2
+        with:
+          cmd: 'echo $(jq ". += {\"browser_specific_settings\": {\"gecko\": {\"id\": \"{test-id}\"}}}" build/manifest.json) > build/manifest.json'
+
       - name: Firefox build
         uses: kewisch/action-web-ext@v1
         id: firefox_build
         with:
-          command: build
-          source-dir: build
-          artifacts-dir: dist
+          cmd: build
+          source: build
+          artifactsDir: dist
 
       - name: Sign Firefox extension
         uses: kewisch/action-web-ext@v1
         id: firefox_sign
         with:
-          command: sign
+          cmd: sign
           source: ${{ steps.firefox_build.outputs.target }}
-          id: ${{ vars.FIREFOX_EXTENSION_ID }}
-          api-key: ${{ secrets.FIREFOX_JWT_ISSUER }}
-          api-secret: ${{ secrets.FIREFOX_JWT_SECRET }}
+          apiKey: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          apiSecret: ${{ secrets.FIREFOX_JWT_SECRET }}
 
       - name: Rename Firefox extension
         run: mv ${{ steps.firefox_sign.outputs.target }} dist/OF-DL_Auth_Helper-firefox-${{ steps.firefox_version.outputs.value }}.xpi
