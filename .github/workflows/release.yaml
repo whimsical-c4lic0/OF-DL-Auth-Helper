@@ -30,8 +30,8 @@ jobs:
             exit 1
           fi
 
-          if [ "v${{ steps.firefox_version.outputs.value }}" != "${{ github.ref }}" ]; then
-            echo "Tag (${{ github.ref }}) does not match extension version (v${{ steps.firefox_version.outputs.value }})"
+          if [ "refs/tags/v${{ steps.firefox_version.outputs.value }}" != "${{ github.ref }}" ]; then
+            echo "Tag (${{ github.ref }}) does not match extension version (${{ steps.firefox_version.outputs.value }})"
             exit 1
           fi
 
