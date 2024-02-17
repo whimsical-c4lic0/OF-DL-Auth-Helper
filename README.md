@@ -4,12 +4,48 @@ An extension made to make it easier to copy the correct `auth.json` values when 
 This extension is a fork of [M-rcus/OnlyFans-Cookie-Helper](https://github.com/M-rcus/OnlyFans-Cookie-Helper) with some small
 changes to customize it for OF-DL. I'd like to thank [Marcus](https://github.com/M-rcus) for all his work making the original extension.
 
+## How to install
+
+### Firefox
+
+#### Option 1 - Firefox Add-on Store (AMO) (coming soon)
+
+1. Navigate to the [add-on listing page](javascript:alert('coming%20soon'))
+2. Click "Add to Firefox"
+3. Click "Add" when prompted
+
+#### Option 2 - Manual installation
+
+1. Download the latest `.xpi` file from the [releases page](https://github.com/whimsical-c4lic0/OF-DL-Auth-Helper/releases). If you are prompted to install the extension, click "Add".
+2. Otherwise, install the `.xpi` file by dragging it into the Firefox window. Click "Add" when prompted.
+
+### Chrome / Chromium-based browsers
+
+These steps MAY work on other Chromium-based browsers, such as: Brave, Microsoft Edge, Vivaldi and Opera (to name a few).
+I only do simple tests on a basic Chromium install, as my primary browser is Firefox. I will not be publishing this extension
+to the Chrome Web Store, so you will need to install it manually.
+
+#### Option 1 - Manual CRX installation
+
+This is **VERY unofficial way** of installing the extension and you might a few warnings about it being unsafe (which is _generally_ true).  
+<ins>If you are not comfortable with that, you can either choose to use Firefox instead or try option 2 below.</ins>
+
+1. Download the latest `.crx` file from the [releases page](https://github.com/whimsical-c4lic0/OF-DL-Auth-Helper/releases). You may be prompted to install the extension. If you are, click "Add extension".
+2. Otherwise, open the extensions page in your browser (e.g. `chrome://extensions`). Drag the `.crx` file into the extensions page, and accept the prompt to install the extension.
+
+#### Option 2 - Manual unpacked installation
+
+1. Download the latest chrome `.zip` file from the [releases page](https://github.com/whimsical-c4lic0/OF-DL-Auth-Helper/releases). The `.zip` file will have the prefix `OF-DL_Auth_Helper-chrome-`. DO NOT download the `Source code (.zip)` file. It will not work as an extension.
+2. Extract the `.zip` file to a folder of your choice
+3. Open the extensions page in your browser (e.g. `chrome://extensions`)
+4. Enable "Developer mode" (usually a toggle in the top-right corner)
+5. Click "Load unpacked" and select the folder you extracted the `.zip` file to
 
 ## How to use
 
 Make sure you're logged into the OnlyFans website normally.
 
-After installing the extension, click the cookie icon. A popup should show up (see [preview](#preview)) with a JSON-formatted text.
+After installing the extension, click the cookie icon. A popup should show up with a JSON-formatted text field.
 
 Right-click on the "Download auth.json" link at the bottom of the popup and click "Save link as...". Save the file
 as `auth.json` in your config folder (or executable folder). Overwrite the existing `auth.json` file if you have one.
