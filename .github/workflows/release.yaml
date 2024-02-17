@@ -43,7 +43,7 @@ jobs:
       - name: Add Firefox extension id to manifest
         uses: sergeysova/jq-action@v2
         with:
-          cmd: 'echo $(jq ". += {\"browser_specific_settings\": {\"gecko\": {\"id\": \"${{ vars.FIREFOX_EXTENSION_ID }}\"}}}" build/manifest.json) > build/manifest.json'
+          cmd: 'echo $(jq ". += {\"browser_specific_settings\": {\"gecko\": {\"id\": \"{${{ vars.FIREFOX_EXTENSION_ID }}}\"}}}" build/manifest.json) > build/manifest.json'
 
       - name: Firefox build
         uses: kewisch/action-web-ext@v1
@@ -54,12 +54,12 @@ jobs:
           artifactsDir: dist
 
       - name: Upload Firefox extension to AMO
-        uses: birchill/amo-upload@v1.0.0
+        uses: browser-actions/release-firefox-addon@v0.1.3
         with:
-          addon_id: ${{ secrets.FIREFOX_EXTENSION_ID }}
-          amo_jwt_iss: ${{ secrets.FIREFOX_JWT_ISSUER }}
-          amo_jwt_secret: ${{ secrets.FIREFOX_JWT_SECRET }}
-          addon_file: ${{ steps.firefox_build.outputs.target }}
+          addon-id: ${{ secrets.FIREFOX_EXTENSION_ID }}
+          addon-path: ${{ steps.firefox_build.outputs.target }}
+          auth-api-issuer: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          auth-api-secret: ${{ secrets.FIREFOX_JWT_SECRET }}
 
       - name: Prepare for Chrome build
         run: |
