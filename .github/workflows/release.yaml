@@ -1,0 +1,88 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Get Firefox extension version
+        uses: sergeysova/jq-action@v2
+        id: firefox_version
+        with:
+          cmd: 'jq -r .version firefox_manifest.json'
+
+      - name: Get Chrome extension version
+        uses: sergeysova/jq-action@v2
+        id: chrome_version
+        with:
+          cmd: 'jq -r .version chrome_manifest.json'
+
+      - name: Check extension versions
+        run: |
+          if [ "${{ steps.firefox_version.outputs.value }}" != "${{ steps.chrome_version.outputs.value }}" ]; then
+            echo "Extension versions do not match"
+            exit 1
+          fi
+
+          if [ "v${{ steps.firefox_version.outputs.value }}" != "${{ github.ref }}" ]; then
+            echo "Tag does not match extension version"
+            exit 1
+          fi
+
+      - name: Prepare for Firefox build
+        run: |
+          ./bin/prepare_build.sh firefox
+          mkdir -p dist
+
+      - name: Firefox build
+        uses: kewisch/action-web-ext@v1
+        id: firefox_build
+        with:
+          command: build
+          source-dir: build
+          artifacts-dir: dist
+
+      - name: Sign Firefox extension
+        uses: kewisch/action-web-ext@v1
+        id: firefox_sign
+        with:
+          command: sign
+          source: ${{ steps.firefox_build.outputs.target }}
+          id: ${{ vars.FIREFOX_EXTENSION_ID }}
+          api-key: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          api-secret: ${{ secrets.FIREFOX_JWT_SECRET }}
+
+      - name: Rename Firefox extension
+        run: mv ${{ steps.firefox_sign.outputs.target }} dist/OF-DL_Auth_Helper-firefox-${{ steps.firefox_version.outputs.value }}.xpi
+
+      - name: Prepare for Chrome build
+        run: |
+          ./bin/prepare_build.sh chrome
+
+      - name: Chrome pack extension
+        uses: cardinalby/webext-buildtools-pack-extension-dir-action@v1
+        with:
+          extensionDir: build
+          zipFilePath: dist/OF-DL_Auth_Helper-chrome-${{ steps.chrome_version.outputs.value }}.zip
+
+      - name: Create Chrome CRX
+        uses: cardinalby/webext-buildtools-chrome-crx-action@v2
+        with:
+          zipFilePath: dist/OF-DL_Auth_Helper-chrome-${{ steps.chrome_version.outputs.value }}.zip
+          crxFilePath: dist/OF-DL_Auth_Helper-chrome-${{ steps.chrome_version.outputs.value }}.crx
+          privateKey: ${{ secrets.CHROME_PRIVATE_KEY }}
+
+      - name: Upload artifacts
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          files: |
+            dist/OF-DL_Auth_Helper-firefox-${{ steps.firefox_version.outputs.value }}.xpi
+            dist/OF-DL_Auth_Helper-chrome-${{ steps.chrome_version.outputs.value }}.crx
