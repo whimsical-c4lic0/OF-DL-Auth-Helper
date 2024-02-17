@@ -43,7 +43,7 @@ jobs:
       - name: Add Firefox extension id to manifest
         uses: sergeysova/jq-action@v2
         with:
-          cmd: 'echo $(jq ". += {\"browser_specific_settings\": {\"gecko\": {\"id\": \"{test-id}\"}}}" build/manifest.json) > build/manifest.json'
+          cmd: 'echo $(jq ". += {\"browser_specific_settings\": {\"gecko\": {\"id\": \"${{ vars.FIREFOX_EXTENSION_ID }}\"}}}" build/manifest.json) > build/manifest.json'
 
       - name: Firefox build
         uses: kewisch/action-web-ext@v1
