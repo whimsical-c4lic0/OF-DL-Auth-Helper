@@ -147,6 +147,7 @@ async function grabCookies(cookieStoreId) {
     const authId = mappedCookies.auth_id;
     const sess = mappedCookies.sess;
     const copyBtn = document.querySelector('#copy-to-clipboard');
+    const downloadBtn = document.querySelector('#download-file');
     const jsonElement = document.querySelector('#json');
     const errorElement = document.querySelector('#errorMessage');
 
@@ -166,6 +167,13 @@ async function grabCookies(cookieStoreId) {
 
         if (!copyBtn.classList.contains('hidden')) {
             copyBtn.classList.add('hidden');
+        }
+
+        if (!downloadBtn.classList.contains('hidden')) {
+            downloadBtn.classList.add('hidden');
+        }
+
+        if (!jsonElement.classList.contains('hidden')) {
             jsonElement.classList.add('hidden');
         }
 
@@ -187,6 +195,13 @@ async function grabCookies(cookieStoreId) {
 
         if (!copyBtn.classList.contains('hidden')) {
             copyBtn.classList.add('hidden');
+        }
+
+        if (!downloadBtn.classList.contains('hidden')) {
+            downloadBtn.classList.add('hidden');
+        }
+
+        if (!jsonElement.classList.contains('hidden')) {
             jsonElement.classList.add('hidden');
         }
 
@@ -194,24 +209,9 @@ async function grabCookies(cookieStoreId) {
     }
 
     copyBtn.classList.remove('hidden');
+    downloadBtn.classList.remove('hidden');
     jsonElement.classList.remove('hidden');
     errorElement.classList.add('hidden');
-
-    /**
-     * Fill out the object that OnlyFans excepts
-     */
-    const config = {
-        username: 'u' + authId,
-        cookie: `auth_id=${authId}; sess=${sess}; auth_hash=; auth_uniq_${authId}=; auth_uid_${authId}=;`,
-        // TODO: Still need to handle this better...
-        user_agent: navigator.userAgent,
-        x_bc: bcToken,
-        support_2fa: true,
-        active: true,
-        email: "",
-        password: "",
-        hashed: false,
-    };
 
     /**
      * Then we print it to the popup :)
@@ -219,11 +219,14 @@ async function grabCookies(cookieStoreId) {
      * Third parameter to JSON.stringify() is for spacing the indentation.
      */
     const authConfig = {
-        auth: config,
+        USER_ID: authId,
+        USER_AGENT: navigator.userAgent,
+        X_BC: bcToken,
+        COOKIE: Object.keys(mappedCookies).map((key) => `${key}=${mappedCookies[key]};`).join(' '),
     };
 
-    const cookieJson = JSON.stringify(authConfig, null, 2);
-    jsonElement.textContent = cookieJson;
+    const authJson = JSON.stringify(authConfig, null, 2);
+    jsonElement.textContent = authJson;
 
     /**
      * Use yee yee ghetto ass method as a fallback
@@ -233,7 +236,7 @@ async function grabCookies(cookieStoreId) {
     const oldBtnText = copyBtn.innerHTML;
     copyBtn.addEventListener('click', async () => {
         try {
-            await clipboardWriteText(cookieJson);
+            await clipboardWriteText(authJson);
 
             copyBtn.textContent = 'Copied to clipboard!';
             copyBtn.setAttribute('disabled', '1');
@@ -247,6 +250,10 @@ async function grabCookies(cookieStoreId) {
             copyBtn.removeAttribute('disabled');
         }, 2500);
     });
+
+    const file = new Blob([authJson], {type: 'text/plain'});
+    downloadBtn.href = URL.createObjectURL(file);
+    downloadBtn.download = 'auth.json';
 }
 
 document.addEventListener('DOMContentLoaded', async () => {

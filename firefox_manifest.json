@@ -1,8 +1,8 @@
 {
     "manifest_version": 2,
-    "name": "OnlyFans Cookie Helper",
-    "version": "2.3.0",
-    "description": "Helper extension that makes it easier to copy config.json values for the DIGITALCRIMINALS/OnlyFans scraper",
+    "name": "OF-DL Auth Helper",
+    "version": "0.0.1",
+    "description": "Helper extension that makes it easier to copy auth.json values for the OF-DL",
     "icons": {
         "48": "icons/cookie.png"
     },
@@ -21,7 +21,7 @@
         "default_icon": {
             "48": "icons/cookie.png"
         },
-        "default_title": "OnlyFans Cookie Helper",
+        "default_title": "OF-DL Auth Helper",
         "default_popup": "popup/cookies.html"
     },
     "content_scripts": [

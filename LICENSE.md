@@ -1,6 +1,9 @@
 # MIT License
 
-Copyright (c) 2020-2023 Marcus <m@rcus.dev>
+Copyright for portions of the software are held by Marcus <m@rcus.dev> and the contributors of [OnlyFans Cookie Helper](https://github.com/M-rcus/OnlyFans-Cookie-Helper).
+All other code is released under the MIT License by whimsical-c4lic0 <whimsicalcalico@gmail.com>.
+
+Copyright (c) 2024 whimsical-c4lic0 <whimsicalcalico@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
