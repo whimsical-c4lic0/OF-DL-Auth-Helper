@@ -8,9 +8,9 @@ changes to customize it for OF-DL. I'd like to thank [Marcus](https://github.com
 
 ### Firefox
 
-#### Option 1 - Firefox Add-on Store (AMO) (coming soon)
+#### Option 1 - Firefox Add-on Store (AMO)
 
-1. Navigate to the [add-on listing page](javascript:alert('coming%20soon'))
+1. Navigate to the [add-on listing page](https://addons.mozilla.org/en-US/firefox/addon/of-dl-auth-helper/)
 2. Click "Add to Firefox"
 3. Click "Add" when prompted
 
