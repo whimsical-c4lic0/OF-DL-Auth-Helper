@@ -25,15 +25,7 @@ These steps MAY work on other Chromium-based browsers, such as: Brave, Microsoft
 I only do simple tests on a basic Chromium install, as my primary browser is Firefox. I will not be publishing this extension
 to the Chrome Web Store, so you will need to install it manually.
 
-#### Option 1 - Manual CRX installation
-
-This is **VERY unofficial way** of installing the extension and you might a few warnings about it being unsafe (which is _generally_ true).  
-<ins>If you are not comfortable with that, you can either choose to use Firefox instead or try option 2 below.</ins>
-
-1. Download the latest `.crx` file from the [releases page](https://github.com/whimsical-c4lic0/OF-DL-Auth-Helper/releases). You may be prompted to install the extension. If you are, click "Add extension".
-2. Otherwise, open the extensions page in your browser (e.g. `chrome://extensions`). Drag the `.crx` file into the extensions page, and accept the prompt to install the extension.
-
-#### Option 2 - Manual unpacked installation
+#### Option 1 - Manual unpacked installation
 
 1. Download the latest chrome `.zip` file from the [releases page](https://github.com/whimsical-c4lic0/OF-DL-Auth-Helper/releases). The `.zip` file will have the prefix `OF-DL_Auth_Helper-chrome-`. DO NOT download the `Source code (.zip)` file. It will not work as an extension.
 2. Extract the `.zip` file to a folder of your choice
