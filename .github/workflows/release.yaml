@@ -66,13 +66,6 @@ jobs:
           extensionDir: build
           zipFilePath: dist/OF-DL_Auth_Helper-chrome-${{ steps.chrome_version.outputs.value }}.zip
 
-      - name: Create Chrome CRX
-        uses: cardinalby/webext-buildtools-chrome-crx-action@v2
-        with:
-          zipFilePath: dist/OF-DL_Auth_Helper-chrome-${{ steps.chrome_version.outputs.value }}.zip
-          crxFilePath: dist/OF-DL_Auth_Helper-chrome-${{ steps.chrome_version.outputs.value }}.crx
-          privateKey: ${{ secrets.CHROME_PRIVATE_KEY }}
-
       - name: Upload artifacts
         uses: softprops/action-gh-release@v1
         env:
@@ -82,5 +75,4 @@ jobs:
           fail_on_unmatched_files: true
           files: |
             dist/OF-DL_Auth_Helper-firefox-${{ steps.firefox_version.outputs.value }}.zip
-            dist/OF-DL_Auth_Helper-chrome-${{ steps.chrome_version.outputs.value }}.crx
             dist/OF-DL_Auth_Helper-chrome-${{ steps.chrome_version.outputs.value }}.zip
