@@ -117,20 +117,38 @@ function hideControls() {
     document.getElementById('json').classList.add('hidden');
 }
 
-function showErrorMessage(cookieStoreId, errorMessage, containerTemplateErrorMessage) {
+function hideErrorMessages() {
+    const errorMessageIds = [
+        'auth-error-message',
+        'auth-container-error-message',
+        'bc-error-message',
+        'bc-container-error-message',
+    ];
+
+    for (const id of errorMessageIds) {
+        document.getElementById(id).classList.add('hidden');
+    }
+}
+
+function showErrorMessage(cookieStoreId, isAuthError) {
+    hideErrorMessages();
     hideControls();
 
-    const errorElement = document.getElementById('errorMessage');
-
-    let msg = errorMessage;
+    const errorMessageId = isAuthError
+        ? containersEnabled
+            ? 'auth-container-error-message'
+            : 'auth-error-message'
+        : containersEnabled
+            ? 'bc-container-error-message'
+            : 'bc-error-message';
 
     if (containersEnabled) {
-        const containerName = containerNames[cookieStoreId] || 'Default (no container)';
-        msg = containerTemplateErrorMessage.replaceAll('CONTAINER_NAME', containerName);
+        [...document.querySelectorAll('.container-name-template')].forEach((el) => {
+            el.textContent = containerNames[cookieStoreId] || 'Default (no container)';
+        });
     }
 
-    errorElement.innerHTML = msg;
-    errorElement.classList.remove('hidden');
+    document.getElementById(errorMessageId).classList.remove('hidden');
 }
 
 async function getAuthConfig(cookieStoreId) {
@@ -140,11 +158,7 @@ async function getAuthConfig(cookieStoreId) {
      * If authId isn't specified, user is not logged into OnlyFans... or at least we assume so.
      */
     if (!mappedCookies['auth_id'] || !mappedCookies['sess']) {
-        showErrorMessage(
-            cookieStoreId,
-            'Could not find valid cookie values, make sure you are logged into OnlyFans.',
-            'Could not find valid cookie values in container: <strong>CONTAINER_NAME</strong><br>Make sure you are logged into OnlyFans.'
-        );
+        showErrorMessage(cookieStoreId, true);
         return null;
     }
 
@@ -153,11 +167,7 @@ async function getAuthConfig(cookieStoreId) {
     const bcToken = await getBcTokenSha(st);
 
     if (!bcToken) {
-        showErrorMessage(
-            cookieStoreId,
-            'Could not find valid x_bc value. Please open OnlyFans.com once and make sure it fully loads. If you are not logged in, please log in and <i>refresh the page</i>.',
-            'Could not find valid x_bc value. Please open OnlyFans.com once in container: <strong>CONTAINER_NAME</strong><br>Make sure it fully loads. If you are not logged in, please log in and <i>refresh the page</i>.'
-        );
+        showErrorMessage(cookieStoreId, false);
         return null;
     }
 
@@ -176,8 +186,8 @@ async function displayAuthConfig(cookieStoreId) {
         return;
     }
 
+    hideErrorMessages();
     showControls();
-    document.getElementById('errorMessage').classList.add('hidden');
 
     const jsonElement = document.getElementById('json');
     const authJson = JSON.stringify(authConfig, null, 2);

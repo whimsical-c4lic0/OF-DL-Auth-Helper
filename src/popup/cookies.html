@@ -24,7 +24,10 @@
 <body>
     <div>
         <pre><code id="json"></code></pre>
-        <span id="errorMessage" class="hidden red"></span>
+        <span id="auth-error-message" class="hidden red">Could not find valid cookie values, make sure you are logged into OnlyFans.</span>
+        <span id="auth-container-error-message" class="hidden red">Could not find valid cookie values in container: <strong class="container-name-template">CONTAINER_NAME</strong><br>Make sure you are logged into OnlyFans.</span>
+        <span id="bc-error-message" class="hidden red">Could not find valid x_bc value. Please open OnlyFans.com once and make sure it fully loads. If you are not logged in, please log in and <i>refresh the page</i>.</span>
+        <span id="bc-container-error-message" class="hidden red">Could not find valid x_bc value. Please open OnlyFans.com once in container: <strong class="container-name-template">CONTAINER_NAME</strong><br>Make sure it fully loads. If you are not logged in, please log in and <i>refresh the page</i>.</span>
         <br><br>
         <button id="copy-to-clipboard">Copy to clipboard</button>
         <a id="download-file">Download auth.json</a>
