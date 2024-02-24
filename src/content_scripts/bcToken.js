@@ -11,11 +11,11 @@ async function getBcToken()
      * We don't have access to all cookies here, so instead we use a workaround
      * with the few cookie values we _do_ have access to.
      */
-    const match = document.cookie.match(/st=(\w{64})/);
+    const match = new RegExp(/st=(\w{64})/).exec(document.cookie);
     const id = match[1];
 
     try {
-        const message = await chrome.runtime.sendMessage({
+        await chrome.runtime.sendMessage({
             bcTokenSha: bcToken,
             id: id,
         });
