@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <style type="text/css">
+    <meta charset="utf-8">
+    <title>OF-DL Auth Helper</title>
+    <style>
         .hidden {
             display: none;
         }
@@ -22,7 +23,7 @@
 </head>
 <body>
     <div>
-        <code><pre id="json"></pre></code>
+        <pre><code id="json"></code></pre>
         <span id="errorMessage" class="hidden red"></span>
         <br><br>
         <button id="copy-to-clipboard">Copy to clipboard</button>
@@ -30,10 +31,12 @@
     </div>
 
     <div id="container-list" class="hidden">
-        Select container tab:
-        <select>
-            <option value="">Default (no container)</option>
-        </select>
+        <label>
+            Select container tab:
+            <select id="container-select">
+                <option value="">Default (no container)</option>
+            </select>
+        </label>
     </div>
     <script type="text/javascript" src="../lib/browser-polyfill.min.js"></script>
     <script type="text/javascript" src="cookies.js"></script>

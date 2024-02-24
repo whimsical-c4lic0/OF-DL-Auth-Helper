@@ -1,26 +1,3 @@
-/**
- * Shamelessly copied from: https://techoverflow.net/2018/03/30/copying-strings-to-the-clipboard-using-pure-javascript/
- *
- * Only used as a fallback if for some reason the Clipboard API
- * does not exist... heh.
- */
-async function copyStringToClipboard (str) {
-    // Create new element
-    var el = document.createElement('textarea');
-    // Set value (string to be copied)
-    el.value = str;
-    // Set non-editable to avoid focus and move outside of view
-    el.setAttribute('readonly', '');
-    el.style = {position: 'absolute', left: '-9999px'};
-    document.body.appendChild(el);
-    // Select text inside element
-    el.select();
-    // Copy text to clipboard
-    document.execCommand('copy');
-    // Remove temporary element
-    document.body.removeChild(el);
-}
-
 const containerNames = {};
 const containersEnabled = browser.contextualIdentities !== undefined;
 
@@ -29,7 +6,7 @@ const containersEnabled = browser.contextualIdentities !== undefined;
  */
 async function getBcTokenSha(id)
 {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
         chrome.storage.local.get(['bcTokens'], function(data) {
             const bcTokens = data.bcTokens || {};
 
@@ -45,18 +22,6 @@ async function getBcTokenSha(id)
 
 async function getContainers()
 {
-    /**
-     * Prefill popup with "no container" cookies
-     */
-    grabCookies();
-
-    /**
-     * Non-Firefox browser or containers not enabled.
-     */
-    if (!containersEnabled) {
-        return;
-    }
-
     /**
      * Containers are enabled, but none found.
      */
@@ -81,10 +46,9 @@ async function getContainers()
         return 0;
     });
 
-    const containerSection = document.querySelector('#container-list');
-    containerSection.classList.remove('hidden');
+    document.getElementById('container-list').classList.remove('hidden');
 
-    const optionList = containerSection.querySelector('select');
+    const optionList = document.getElementById('container-select');
 
     for (const container of containers)
     {
@@ -104,15 +68,15 @@ async function getContainers()
         const storeId = event.target.value;
 
         if (!storeId || storeId.length < 1) {
-            grabCookies(null);
+            displayAuthConfig(null);
             return;
         }
 
-        grabCookies(storeId);
+        displayAuthConfig(storeId);
     });
 }
 
-async function grabCookies(cookieStoreId) {
+async function getMappedCookies(cookieStoreId) {
     /**
      * Grab the cookies from the browser...
      */
@@ -138,105 +102,92 @@ async function grabCookies(cookieStoreId) {
         mappedCookies[cookie.name] = cookie.value;
     }
 
-    /**
-     * Define and check if `authId` exists
-     * if not, return and call it a day...
-     *
-     * Also define the other elements.
-     */
-    const authId = mappedCookies.auth_id;
-    const sess = mappedCookies.sess;
-    const copyBtn = document.querySelector('#copy-to-clipboard');
-    const downloadBtn = document.querySelector('#download-file');
-    const jsonElement = document.querySelector('#json');
-    const errorElement = document.querySelector('#errorMessage');
+    return mappedCookies;
+}
+
+function showControls() {
+    document.getElementById('copy-to-clipboard').classList.remove('hidden');
+    document.getElementById('download-file').classList.remove('hidden');
+    document.getElementById('json').classList.remove('hidden');
+}
+
+function hideControls() {
+    document.getElementById('copy-to-clipboard').classList.add('hidden');
+    document.getElementById('download-file').classList.add('hidden');
+    document.getElementById('json').classList.add('hidden');
+}
+
+function showErrorMessage(cookieStoreId, errorMessage, containerTemplateErrorMessage) {
+    hideControls();
+
+    const errorElement = document.getElementById('errorMessage');
+
+    let msg = errorMessage;
+
+    if (containersEnabled) {
+        const containerName = containerNames[cookieStoreId] || 'Default (no container)';
+        msg = containerTemplateErrorMessage.replaceAll('CONTAINER_NAME', containerName);
+    }
+
+    errorElement.innerHTML = msg;
+    errorElement.classList.remove('hidden');
+}
+
+async function getAuthConfig(cookieStoreId) {
+    const mappedCookies = await getMappedCookies(cookieStoreId);
 
     /**
-     * If authId isn't specified, user is not logged into
-     * OnlyFans... or at least we assume so.
+     * If authId isn't specified, user is not logged into OnlyFans... or at least we assume so.
      */
-    if (!authId || !sess) {
-        let errorMessage = 'Could not find valid cookie values, make sure you are logged into OnlyFans.';
-        if (containersEnabled) {
-            const containerName = containerNames[cookieStoreId] || 'Default (no container)';
-            errorMessage = `Could not find valid cookie values in container: <strong>${containerName}</strong><br>Make sure you are logged into OnlyFans.`;
-        }
-
-        errorElement.innerHTML = errorMessage;
-        errorElement.classList.remove('hidden');
-
-        if (!copyBtn.classList.contains('hidden')) {
-            copyBtn.classList.add('hidden');
-        }
-
-        if (!downloadBtn.classList.contains('hidden')) {
-            downloadBtn.classList.add('hidden');
-        }
-
-        if (!jsonElement.classList.contains('hidden')) {
-            jsonElement.classList.add('hidden');
-        }
-
-        return;
+    if (!mappedCookies['auth_id'] || !mappedCookies['sess']) {
+        showErrorMessage(
+            cookieStoreId,
+            'Could not find valid cookie values, make sure you are logged into OnlyFans.',
+            'Could not find valid cookie values in container: <strong>CONTAINER_NAME</strong><br>Make sure you are logged into OnlyFans.'
+        );
+        return null;
     }
 
     // See `background/background.js` as to why we use `st` here
-    const st = mappedCookies.st;
+    const st = mappedCookies['st'];
     const bcToken = await getBcTokenSha(st);
+
     if (!bcToken) {
-        let errorMessage = 'Could not find valid x_bc value. Please open OnlyFans.com once and make sure it fully loads. If you are not logged in, please log in and <i>refresh the page</i>.';
-        if (containersEnabled) {
-            const containerName = containerNames[cookieStoreId] || 'Default (no container)';
-            errorMessage = `Could not find valid x_bc value. Please open OnlyFans.com once in container: <strong>${containerName}</strong><br>Make sure it fully loads. If you are not logged in, please log in and <i>refresh the page</i>.`;
-        }
-
-        errorElement.innerHTML = errorMessage;
-        errorElement.classList.remove('hidden');
-
-        if (!copyBtn.classList.contains('hidden')) {
-            copyBtn.classList.add('hidden');
-        }
-
-        if (!downloadBtn.classList.contains('hidden')) {
-            downloadBtn.classList.add('hidden');
-        }
-
-        if (!jsonElement.classList.contains('hidden')) {
-            jsonElement.classList.add('hidden');
-        }
-
-        return;
+        showErrorMessage(
+            cookieStoreId,
+            'Could not find valid x_bc value. Please open OnlyFans.com once and make sure it fully loads. If you are not logged in, please log in and <i>refresh the page</i>.',
+            'Could not find valid x_bc value. Please open OnlyFans.com once in container: <strong>CONTAINER_NAME</strong><br>Make sure it fully loads. If you are not logged in, please log in and <i>refresh the page</i>.'
+        );
+        return null;
     }
 
-    copyBtn.classList.remove('hidden');
-    downloadBtn.classList.remove('hidden');
-    jsonElement.classList.remove('hidden');
-    errorElement.classList.add('hidden');
-
-    /**
-     * Then we print it to the popup :)
-     *
-     * Third parameter to JSON.stringify() is for spacing the indentation.
-     */
-    const authConfig = {
-        USER_ID: authId,
+    return {
+        USER_ID: mappedCookies['auth_id'],
         USER_AGENT: navigator.userAgent,
         X_BC: bcToken,
         COOKIE: Object.keys(mappedCookies).map((key) => `${key}=${mappedCookies[key]};`).join(' '),
     };
+}
 
+async function displayAuthConfig(cookieStoreId) {
+    const authConfig = await getAuthConfig(cookieStoreId);
+
+    if (!authConfig) {
+        return;
+    }
+
+    showControls();
+    document.getElementById('errorMessage').classList.add('hidden');
+
+    const jsonElement = document.getElementById('json');
     const authJson = JSON.stringify(authConfig, null, 2);
     jsonElement.textContent = authJson;
 
-    /**
-     * Use yee yee ghetto ass method as a fallback
-     * method for copying to clipboard.
-     */
-    const clipboardWriteText = browser.clipboard.writeText || copyStringToClipboard;
+    const copyBtn = document.getElementById('copy-to-clipboard');
     const oldBtnText = copyBtn.innerHTML;
     copyBtn.addEventListener('click', async () => {
         try {
-            await clipboardWriteText(authJson);
+            await navigator.clipboard.writeText(authJson);
 
             copyBtn.textContent = 'Copied to clipboard!';
             copyBtn.setAttribute('disabled', '1');
@@ -252,10 +203,15 @@ async function grabCookies(cookieStoreId) {
     });
 
     const file = new Blob([authJson], {type: 'text/plain'});
+    const downloadBtn = document.getElementById('download-file');
     downloadBtn.href = URL.createObjectURL(file);
     downloadBtn.download = 'auth.json';
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    await getContainers();
+    await displayAuthConfig();
+
+    if (containersEnabled) {
+        await getContainers();
+    }
 });
