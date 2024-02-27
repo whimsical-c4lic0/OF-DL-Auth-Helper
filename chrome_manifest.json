@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "OF-DL Auth Helper",
-    "version": "0.0.7",
+    "version": "0.0.8",
     "description": "Helper extension that makes it easier to copy auth.json values for the OF-DL",
     "icons": {
         "48": "icons/cookie.png"
