@@ -8,14 +8,6 @@ changes to customize it for OF-DL. I'd like to thank [Marcus](https://github.com
 
 ### Firefox
 
-#### Option 1 - Firefox Add-on Store (AMO)
-
-1. Navigate to the [add-on listing page](https://addons.mozilla.org/en-US/firefox/addon/of-dl-auth-helper/)
-2. Click "Add to Firefox"
-3. Click "Add" when prompted
-
-#### Option 2 - Manual installation
-
 1. Download the latest `.xpi` file from the [releases page](https://github.com/whimsical-c4lic0/OF-DL-Auth-Helper/releases). If you are prompted to install the extension, click "Add".
 2. Otherwise, install the `.xpi` file by dragging it into the Firefox window. Click "Add" when prompted.
 
@@ -24,8 +16,6 @@ changes to customize it for OF-DL. I'd like to thank [Marcus](https://github.com
 These steps MAY work on other Chromium-based browsers, such as: Brave, Microsoft Edge, Vivaldi and Opera (to name a few).
 I only do simple tests on a basic Chromium install, as my primary browser is Firefox. I will not be publishing this extension
 to the Chrome Web Store, so you will need to install it manually.
-
-#### Option 1 - Manual unpacked installation
 
 1. Download the latest chrome `.zip` file from the [releases page](https://github.com/whimsical-c4lic0/OF-DL-Auth-Helper/releases). The `.zip` file will have the prefix `OF-DL_Auth_Helper-chrome-`. DO NOT download the `Source code (.zip)` file. It will not work as an extension.
 2. Extract the `.zip` file to a folder of your choice
