@@ -57,11 +57,10 @@ jobs:
         uses: kewisch/action-web-ext@v1
         id: firefox_sign
         with:
-          command: sign
+          cmd: sign
           source: ${{ steps.firefox_build.outputs.target }}
-          id: ${{ vars.FIREFOX_EXTENSION_ID }}
-          api-key: ${{ secrets.FIREFOX_JWT_ISSUER }}
-          api-secret: ${{ secrets.FIREFOX_JWT_SECRET }}
+          apiKey: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          apiSecret: ${{ secrets.FIREFOX_JWT_SECRET }}
 
       - name: Rename Firefox extension
         run: mv ${{ steps.firefox_sign.outputs.target }} dist/OF-DL_Auth_Helper-firefox-${{ steps.firefox_version.outputs.value }}.xpi
