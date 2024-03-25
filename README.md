@@ -50,7 +50,6 @@ Overview of permissions and why they're required.
     - `x_bc` isn't available via the regular `cookies` permission, so we need a workaround (which utilizes the `storage` permission).
 - `contextualIdentities`
     - On Firefox, it's used to support multi-account containers.
-    - ~~On Chromium-based browsers (Google Chrome, Brave, Microsoft Edge, Vivaldi, Opera etc.) it does nothing. However, it may give a warning. The extension should still work even with this warning.~~ - This should no longer happen as of v2.2.0.
 
 ## LICENSE
 
