@@ -7,7 +7,7 @@ on:
 
 jobs:
   release:
-    runs-on: [self-hosted, ubuntu-latest]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -53,35 +53,35 @@ jobs:
           source: build
           artifactsDir: dist
 
-      - name: Sign Firefox extension
-        uses: kewisch/action-web-ext@v1
-        id: firefox_sign
-        with:
-          cmd: sign
-          source: ${{ steps.firefox_build.outputs.target }}
-          apiKey: ${{ secrets.FIREFOX_JWT_ISSUER }}
-          apiSecret: ${{ secrets.FIREFOX_JWT_SECRET }}
-
-      - name: Rename Firefox extension
-        run: mv ${{ steps.firefox_sign.outputs.target }} dist/OF-DL_Auth_Helper-firefox-${{ steps.firefox_version.outputs.value }}.xpi
-
-      - name: Prepare for Chrome build
-        run: |
-          bash bin/prepare_build.sh chrome
-
-      - name: Chrome pack extension
-        uses: cardinalby/webext-buildtools-pack-extension-dir-action@v1
-        with:
-          extensionDir: build
-          zipFilePath: dist/OF-DL_Auth_Helper-chrome-${{ steps.chrome_version.outputs.value }}.zip
-
-      - name: Upload artifacts
-        uses: softprops/action-gh-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          draft: true
-          fail_on_unmatched_files: true
-          files: |
-            dist/OF-DL_Auth_Helper-firefox-${{ steps.firefox_version.outputs.value }}.xpi
-            dist/OF-DL_Auth_Helper-chrome-${{ steps.chrome_version.outputs.value }}.zip
+#       - name: Sign Firefox extension
+#         uses: kewisch/action-web-ext@v1
+#         id: firefox_sign
+#         with:
+#           cmd: sign
+#           source: ${{ steps.firefox_build.outputs.target }}
+#           apiKey: ${{ secrets.FIREFOX_JWT_ISSUER }}
+#           apiSecret: ${{ secrets.FIREFOX_JWT_SECRET }}
+#
+#       - name: Rename Firefox extension
+#         run: mv ${{ steps.firefox_sign.outputs.target }} dist/OF-DL_Auth_Helper-firefox-${{ steps.firefox_version.outputs.value }}.xpi
+#
+#       - name: Prepare for Chrome build
+#         run: |
+#           bash bin/prepare_build.sh chrome
+#
+#       - name: Chrome pack extension
+#         uses: cardinalby/webext-buildtools-pack-extension-dir-action@v1
+#         with:
+#           extensionDir: build
+#           zipFilePath: dist/OF-DL_Auth_Helper-chrome-${{ steps.chrome_version.outputs.value }}.zip
+#
+#       - name: Upload artifacts
+#         uses: softprops/action-gh-release@v1
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#         with:
+#           draft: true
+#           fail_on_unmatched_files: true
+#           files: |
+#             dist/OF-DL_Auth_Helper-firefox-${{ steps.firefox_version.outputs.value }}.xpi
+#             dist/OF-DL_Auth_Helper-chrome-${{ steps.chrome_version.outputs.value }}.zip
