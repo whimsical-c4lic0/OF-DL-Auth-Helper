@@ -11,17 +11,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install jq
+        run: sudo apt-get install jq
+
       - name: Get Firefox extension version
-        uses: sergeysova/jq-action@v2
         id: firefox_version
-        with:
-          cmd: 'jq -r .version firefox_manifest.json'
+        run: jq -r .version firefox_manifest.json
 
       - name: Get Chrome extension version
-        uses: sergeysova/jq-action@v2
         id: chrome_version
-        with:
-          cmd: 'jq -r .version chrome_manifest.json'
+        run: jq -r .version chrome_manifest.json
 
       - name: Check extension versions
         run: |
@@ -41,9 +40,7 @@ jobs:
           mkdir -p dist
 
       - name: Add Firefox extension id to manifest
-        uses: sergeysova/jq-action@v2
-        with:
-          cmd: 'echo $(jq ". += {\"browser_specific_settings\": {\"gecko\": {\"id\": \"${{ vars.FIREFOX_EXTENSION_ID }}\"}}}" build/manifest.json) > build/manifest.json'
+        run: 'echo $(jq ". += {\"browser_specific_settings\": {\"gecko\": {\"id\": \"${{ vars.FIREFOX_EXTENSION_ID }}\"}}}" build/manifest.json) > build/manifest.json'
 
       - name: Firefox build
         uses: kewisch/action-web-ext@v1
@@ -53,35 +50,35 @@ jobs:
           source: build
           artifactsDir: dist
 
-#       - name: Sign Firefox extension
-#         uses: kewisch/action-web-ext@v1
-#         id: firefox_sign
-#         with:
-#           cmd: sign
-#           source: ${{ steps.firefox_build.outputs.target }}
-#           apiKey: ${{ secrets.FIREFOX_JWT_ISSUER }}
-#           apiSecret: ${{ secrets.FIREFOX_JWT_SECRET }}
-#
-#       - name: Rename Firefox extension
-#         run: mv ${{ steps.firefox_sign.outputs.target }} dist/OF-DL_Auth_Helper-firefox-${{ steps.firefox_version.outputs.value }}.xpi
-#
-#       - name: Prepare for Chrome build
-#         run: |
-#           bash bin/prepare_build.sh chrome
-#
-#       - name: Chrome pack extension
-#         uses: cardinalby/webext-buildtools-pack-extension-dir-action@v1
-#         with:
-#           extensionDir: build
-#           zipFilePath: dist/OF-DL_Auth_Helper-chrome-${{ steps.chrome_version.outputs.value }}.zip
-#
-#       - name: Upload artifacts
-#         uses: softprops/action-gh-release@v1
-#         env:
-#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#         with:
-#           draft: true
-#           fail_on_unmatched_files: true
-#           files: |
-#             dist/OF-DL_Auth_Helper-firefox-${{ steps.firefox_version.outputs.value }}.xpi
-#             dist/OF-DL_Auth_Helper-chrome-${{ steps.chrome_version.outputs.value }}.zip
+      - name: Sign Firefox extension
+        uses: kewisch/action-web-ext@v1
+        id: firefox_sign
+        with:
+          cmd: sign
+          source: ${{ steps.firefox_build.outputs.target }}
+          apiKey: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          apiSecret: ${{ secrets.FIREFOX_JWT_SECRET }}
+
+      - name: Rename Firefox extension
+        run: mv ${{ steps.firefox_sign.outputs.target }} dist/OF-DL_Auth_Helper-firefox-${{ steps.firefox_version.outputs.value }}.xpi
+
+      - name: Prepare for Chrome build
+        run: |
+          bash bin/prepare_build.sh chrome
+
+      - name: Chrome pack extension
+        uses: cardinalby/webext-buildtools-pack-extension-dir-action@v1
+        with:
+          extensionDir: build
+          zipFilePath: dist/OF-DL_Auth_Helper-chrome-${{ steps.chrome_version.outputs.value }}.zip
+
+      - name: Upload artifacts
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          draft: true
+          fail_on_unmatched_files: true
+          files: |
+            dist/OF-DL_Auth_Helper-firefox-${{ steps.firefox_version.outputs.value }}.xpi
+            dist/OF-DL_Auth_Helper-chrome-${{ steps.chrome_version.outputs.value }}.zip
