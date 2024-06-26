@@ -16,21 +16,21 @@ jobs:
 
       - name: Get Firefox extension version
         id: firefox_version
-        run: jq -r .version firefox_manifest.json
+        run: echo "value=$(jq -r .version firefox_manifest.json)" >> "$GITHUB_OUTPUT"
 
       - name: Get Chrome extension version
         id: chrome_version
-        run: jq -r .version chrome_manifest.json
+        run: echo "value=$(jq -r .version chrome_manifest.json)" >> "$GITHUB_OUTPUT"
 
       - name: Check extension versions
         run: |
-          if [ "${{ steps.firefox_version.outputs.stdout }}" != "${{ steps.chrome_version.outputs.stdout }}" ]; then
-            echo "Extension versions do not match (${{ steps.firefox_version.outputs.stdout }} != ${{ steps.chrome_version.outputs.stdout }})"
+          if [ "${{ steps.firefox_version.outputs.value }}" != "${{ steps.chrome_version.outputs.value }}" ]; then
+            echo "Extension versions do not match (${{ steps.firefox_version.outputs.value }} != ${{ steps.chrome_version.outputs.value }})"
             exit 1
           fi
 
-          if [ "refs/tags/v${{ steps.firefox_version.outputs.stdout }}" != "${{ github.ref }}" ]; then
-            echo "Tag (${{ github.ref }}) does not match extension version (${{ steps.firefox_version.outputs.stdout }})"
+          if [ "refs/tags/v${{ steps.firefox_version.outputs.value }}" != "${{ github.ref }}" ]; then
+            echo "Tag (${{ github.ref }}) does not match extension version (${{ steps.firefox_version.outputs.value }})"
             exit 1
           fi
 
@@ -60,7 +60,7 @@ jobs:
           apiSecret: ${{ secrets.FIREFOX_JWT_SECRET }}
 
       - name: Rename Firefox extension
-        run: mv ${{ steps.firefox_sign.outputs.target }} dist/OF-DL_Auth_Helper-firefox-${{ steps.firefox_version.outputs.stdout }}.xpi
+        run: mv ${{ steps.firefox_sign.outputs.target }} dist/OF-DL_Auth_Helper-firefox-${{ steps.firefox_version.outputs.value }}.xpi
 
       - name: Prepare for Chrome build
         run: |
@@ -70,7 +70,7 @@ jobs:
         uses: cardinalby/webext-buildtools-pack-extension-dir-action@v1
         with:
           extensionDir: build
-          zipFilePath: dist/OF-DL_Auth_Helper-chrome-${{ steps.chrome_version.outputs.stdout }}.zip
+          zipFilePath: dist/OF-DL_Auth_Helper-chrome-${{ steps.chrome_version.outputs.value }}.zip
 
       - name: Upload artifacts
         uses: softprops/action-gh-release@v1
@@ -80,5 +80,5 @@ jobs:
           draft: true
           fail_on_unmatched_files: true
           files: |
-            dist/OF-DL_Auth_Helper-firefox-${{ steps.firefox_version.outputs.stdout }}.xpi
-            dist/OF-DL_Auth_Helper-chrome-${{ steps.chrome_version.outputs.stdout }}.zip
+            dist/OF-DL_Auth_Helper-firefox-${{ steps.firefox_version.outputs.value }}.xpi
+            dist/OF-DL_Auth_Helper-chrome-${{ steps.chrome_version.outputs.value }}.zip
