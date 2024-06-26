@@ -1,5 +1,6 @@
 const containerNames = {};
 const containersEnabled = browser.contextualIdentities !== undefined;
+const desiredCookies = ['auth_id', 'sess'];
 
 /**
  * Get the correct bcToken from storage
@@ -175,7 +176,10 @@ async function getAuthConfig(cookieStoreId) {
         USER_ID: mappedCookies['auth_id'],
         USER_AGENT: navigator.userAgent,
         X_BC: bcToken,
-        COOKIE: Object.keys(mappedCookies).map((key) => `${key}=${mappedCookies[key]};`).join(' '),
+        COOKIE: Object.keys(mappedCookies)
+            .filter((key) => desiredCookies.includes(key))
+            .map((key) => `${key}=${mappedCookies[key]};`)
+            .join(' '),
     };
 }
 
