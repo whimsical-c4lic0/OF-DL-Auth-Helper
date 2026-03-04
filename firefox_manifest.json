@@ -1,5 +1,5 @@
 {
-    "manifest_version": 2,
+    "manifest_version": 3,
     "name": "OF-DL Auth Helper",
     "version": "0.0.9",
     "description": "Helper extension that makes it easier to copy auth.json values for the OF-DL",
@@ -7,17 +7,24 @@
         "48": "icons/cookie.png"
     },
     "background": {
-        "scripts": ["background/background.js"]
+        "scripts": [
+            "background/background.js"
+        ]
     },
     "permissions": [
-        "*://*.onlyfans.com/",
         "cookies",
         "clipboardWrite",
         "storage",
         "contextualIdentities"
     ],
-    "browser_action": {
-        "browser_style": true,
+    "optional_permissions": [
+        "userScripts"
+    ],
+    "host_permissions": [
+        "*://onlyfans.com/*",
+        "*://*.onlyfans.com/*"
+    ],
+    "action": {
         "default_icon": {
             "48": "icons/cookie.png"
         },
@@ -26,8 +33,15 @@
     },
     "content_scripts": [
         {
-            "matches": ["*://*.onlyfans.com/*", "*://*.onlyfans.com/"],
-            "js": ["content_scripts/bcToken.js"]
+            "matches": [
+                "*://onlyfans.com/",
+                "*://onlyfans.com/*",
+                "*://*.onlyfans.com/",
+                "*://*.onlyfans.com/*"
+            ],
+            "js": [
+                "content_scripts/bcToken.js"
+            ]
         }
     ]
 }

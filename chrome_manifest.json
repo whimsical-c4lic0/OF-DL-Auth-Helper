@@ -12,10 +12,12 @@
     "permissions": [
         "cookies",
         "clipboardWrite",
-        "storage"
+        "storage",
+        "userScripts"
     ],
     "host_permissions": [
-        "*://*.onlyfans.com/"
+        "*://onlyfans.com/*",
+        "*://*.onlyfans.com/*"
     ],
     "action": {
         "browser_style": true,
@@ -28,8 +30,10 @@
     "content_scripts": [
         {
             "matches": [
-                "*://*.onlyfans.com/*",
-                "*://*.onlyfans.com/"
+                "*://onlyfans.com/",
+                "*://onlyfans.com/*",
+                "*://*.onlyfans.com/",
+                "*://*.onlyfans.com/*"
             ],
             "js": [
                 "content_scripts/bcToken.js"

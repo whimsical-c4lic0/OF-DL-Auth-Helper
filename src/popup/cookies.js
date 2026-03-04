@@ -1,6 +1,7 @@
 const containerNames = {};
 const containersEnabled = browser.contextualIdentities !== undefined;
 const desiredCookies = ['auth_id', 'sess'];
+const isChromiumBased = /(Chrome|Chromium)\//.test(navigator.userAgent);
 
 /**
  * Get the correct bcToken from storage
@@ -222,7 +223,126 @@ async function displayAuthConfig(cookieStoreId) {
     downloadBtn.download = 'auth.json';
 }
 
+/**
+ * Detects whether the userScripts API exists and is enabled
+ * @returns {Promise<boolean>}
+ */
+async function isUserScriptsAvailable() {
+    if (!chrome.userScripts || typeof chrome.userScripts.getScripts !== 'function') {
+        return false;
+    }
+
+    try {
+        await chrome.userScripts.getScripts();
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+async function requestUserScriptsPermission() {
+    if (!browser.permissions?.request) {
+        return false;
+    }
+
+    try {
+        return await browser.permissions.request({ permissions: ['userScripts'] });
+    } catch (err) {
+        console.error('Failed to request userScripts permission', err);
+        return false;
+    }
+}
+
+async function ensureUserScriptRegistrationIfAvailable(userScriptsAvailable) {
+    if (!userScriptsAvailable) {
+        return;
+    }
+
+    try {
+        await chrome.runtime.sendMessage({ type: 'ensureUserScriptRegistered' });
+    } catch (err) {
+        console.error('Failed to ensure userscript registration', err);
+    }
+}
+
+function getChromeVersion() {
+    return Number(navigator.userAgent.match(/(Chrome|Chromium)\/([0-9]+)/)?.[2] || 0);
+}
+
+async function openExtensionPermissionsPage() {
+    const extensionId = chrome.runtime?.id;
+    const detailsUrl = extensionId
+        ? 'chrome://extensions/?id=' + extensionId
+        : 'chrome://extensions';
+
+    try {
+        if (browser.tabs?.create) {
+            await browser.tabs.create({ url: detailsUrl });
+            return;
+        }
+
+        window.open(detailsUrl, '_blank');
+    } catch (err) {
+        console.error('Failed to open extension permissions page', err);
+    }
+}
+
+function updateUserScriptsPermissionUi(userScriptsAvailable) {
+    const messageEl = document.getElementById('user-scripts-permission-message');
+    const buttonEl = document.getElementById('enable-user-scripts');
+    const instructionsEl = document.getElementById('user-scripts-permission-instructions');
+
+    if (userScriptsAvailable) {
+        messageEl.classList.add('hidden');
+        return;
+    }
+
+    if (isChromiumBased) {
+        const chromeVersion = getChromeVersion();
+        buttonEl.textContent = 'Open extension settings';
+        instructionsEl.textContent = chromeVersion >= 138
+            ? 'In extension settings, open "Details" and enable "Allow User Scripts". After granting, reload OnlyFans if needed.'
+            : 'In chrome://extensions, enable Developer mode. After enabling Developer mode, reload OnlyFans if needed.';
+    } else {
+        buttonEl.textContent = 'Enable userscript permission';
+        instructionsEl.textContent = 'Click the button to grant permission. After granting, reload OnlyFans if needed.';
+    }
+
+    messageEl.classList.remove('hidden');
+}
+
+async function handleEnableUserScriptsClick() {
+    if (!isChromiumBased) {
+        // Start the Firefox permission prompt and immediately close the popup
+        // so the native dialog is not hidden behind it.
+        void requestUserScriptsPermission();
+        window.close();
+        return;
+    }
+
+    const buttonEl = document.getElementById('enable-user-scripts');
+    buttonEl.setAttribute('disabled', '1');
+
+    try {
+        await openExtensionPermissionsPage();
+    } finally {
+        const userScriptsAvailable = await isUserScriptsAvailable();
+        await ensureUserScriptRegistrationIfAvailable(userScriptsAvailable);
+        updateUserScriptsPermissionUi(userScriptsAvailable);
+        buttonEl.removeAttribute('disabled');
+    }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
+    const enableUserScriptsBtn = document.getElementById('enable-user-scripts');
+    enableUserScriptsBtn.addEventListener('click', async () => {
+        await handleEnableUserScriptsClick();
+    });
+
+    const userScriptsAvailable = await isUserScriptsAvailable();
+    await ensureUserScriptRegistrationIfAvailable(userScriptsAvailable);
+    updateUserScriptsPermissionUi(userScriptsAvailable);
+
     await displayAuthConfig();
 
     if (containersEnabled) {

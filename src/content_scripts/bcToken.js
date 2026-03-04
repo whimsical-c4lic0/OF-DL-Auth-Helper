@@ -1,17 +1,19 @@
-async function getBcToken()
-{
-    const ls = window.localStorage;
-    if (!ls.bcTokenSha) {
+async function getBcToken() {
+    if (!window.localStorage.bcTokenSha) {
         return;
     }
 
-    const bcToken = ls.bcTokenSha;
+    const bcToken = window.localStorage.bcTokenSha;
 
     /**
      * We don't have access to all cookies here, so instead we use a workaround
      * with the few cookie values we _do_ have access to.
      */
-    const match = new RegExp(/st=(\w{64})/).exec(document.cookie);
+    const match = /st=(\w{64})/.exec(document.cookie);
+    if (!match || !match[1]) {
+        return;
+    }
+
     const id = match[1];
 
     try {
@@ -27,9 +29,7 @@ async function getBcToken()
 
 // Handle changes/updates to localStorage
 window.addEventListener('storage', function() {
-    const ls = window.localStorage;
-
-    if (ls.bcTokenSha) {
+    if (window.localStorage.bcTokenSha) {
         getBcToken();
     }
 });
