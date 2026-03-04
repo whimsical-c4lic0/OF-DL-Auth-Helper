@@ -6,19 +6,6 @@ const USER_SCRIPT_CODE = `
 (function () {
     'use strict';
 
-    function copyComputedStyles(sourceElement, targetElement) {
-      const computedStyles = window.getComputedStyle(sourceElement);
-
-      for (let i = 0; i < computedStyles.length; i++) {
-        const property = computedStyles[i];
-        targetElement.style.setProperty(
-          property,
-          computedStyles.getPropertyValue(property),
-          computedStyles.getPropertyPriority(property)
-        );
-      }
-    }
-
     function formatSeconds(totalSeconds) {
       const t = Math.floor(totalSeconds); // ensure integer seconds
       if (t < 0 || !Number.isFinite(t)) {
