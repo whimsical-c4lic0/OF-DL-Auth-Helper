@@ -2,6 +2,7 @@ const containerNames = {};
 const containersEnabled = browser.contextualIdentities !== undefined;
 const desiredCookies = ['auth_id', 'sess'];
 const isChromiumBased = /(Chrome|Chromium)\//.test(navigator.userAgent);
+const releasesPageUrl = 'https://github.com/whimsical-c4lic0/OF-DL-Auth-Helper/releases';
 
 /**
  * Get the correct bcToken from storage
@@ -107,16 +108,31 @@ async function getMappedCookies(cookieStoreId) {
     return mappedCookies;
 }
 
+function resizeJsonOutputToContent() {
+    const jsonOutput = document.getElementById('json-output');
+    if (!jsonOutput || jsonOutput.classList.contains('hidden')) {
+        return;
+    }
+
+    jsonOutput.style.height = 'auto';
+    jsonOutput.style.height = jsonOutput.scrollHeight + 'px';
+}
+
 function showControls() {
+    document.getElementById('auth-json-label').classList.remove('hidden');
+    document.getElementById('json-output').classList.remove('hidden');
     document.getElementById('copy-to-clipboard').classList.remove('hidden');
     document.getElementById('download-file').classList.remove('hidden');
-    document.getElementById('json').classList.remove('hidden');
+    document.querySelector('.json-section')?.classList.remove('no-json');
+    requestAnimationFrame(() => resizeJsonOutputToContent());
 }
 
 function hideControls() {
+    document.getElementById('auth-json-label').classList.add('hidden');
+    document.getElementById('json-output').classList.add('hidden');
     document.getElementById('copy-to-clipboard').classList.add('hidden');
     document.getElementById('download-file').classList.add('hidden');
-    document.getElementById('json').classList.add('hidden');
+    document.querySelector('.json-section')?.classList.add('no-json');
 }
 
 function hideErrorMessages() {
@@ -197,9 +213,10 @@ async function displayAuthConfig(cookieStoreId) {
     const jsonElement = document.getElementById('json');
     const authJson = JSON.stringify(authConfig, null, 2);
     jsonElement.textContent = authJson;
+    resizeJsonOutputToContent();
 
     const copyBtn = document.getElementById('copy-to-clipboard');
-    const oldBtnText = copyBtn.innerHTML;
+    const oldBtnText = copyBtn.innerText;
     copyBtn.addEventListener('click', async () => {
         try {
             await navigator.clipboard.writeText(authJson);
@@ -333,15 +350,65 @@ async function handleEnableUserScriptsClick() {
     }
 }
 
+async function openConfigPage() {
+    try {
+        if (chrome.runtime?.openOptionsPage) {
+            await chrome.runtime.openOptionsPage();
+        } else {
+            const optionsUrl = chrome.runtime.getURL('options/config.html');
+            if (browser.tabs?.create) {
+                await browser.tabs.create({ url: optionsUrl });
+            } else {
+                window.open(optionsUrl, '_blank');
+            }
+        }
+    } catch (err) {
+        console.error('Failed to open config page', err);
+    } finally {
+        window.close();
+    }
+}
+
+async function updateReleaseNotice() {
+    const messageEl = document.getElementById('update-available-message');
+    const versionEl = document.getElementById('latest-release-version');
+    const linkEl = document.getElementById('latest-release-link');
+
+    try {
+        const response = await chrome.runtime.sendMessage({ type: 'getUpdateStatus' });
+        const updateStatus = response?.status;
+        if (!response?.ok || !updateStatus?.updateAvailable) {
+            messageEl.classList.add('hidden');
+            return;
+        }
+
+        versionEl.textContent = updateStatus.latestReleaseVersion
+            ? 'Latest release: v' + updateStatus.latestReleaseVersion
+            : 'A new version is available.';
+        linkEl.href = updateStatus.latestReleaseUrl || releasesPageUrl;
+        messageEl.classList.remove('hidden');
+    } catch (err) {
+        console.error('Failed to load release status', err);
+        messageEl.classList.add('hidden');
+    }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     const enableUserScriptsBtn = document.getElementById('enable-user-scripts');
     enableUserScriptsBtn.addEventListener('click', async () => {
         await handleEnableUserScriptsClick();
     });
 
+    const openConfigBtn = document.getElementById('open-config-page');
+    openConfigBtn.addEventListener('click', async () => {
+        await openConfigPage();
+    });
+
     const userScriptsAvailable = await isUserScriptsAvailable();
     await ensureUserScriptRegistrationIfAvailable(userScriptsAvailable);
     updateUserScriptsPermissionUi(userScriptsAvailable);
+
+    await updateReleaseNotice();
 
     await displayAuthConfig();
 

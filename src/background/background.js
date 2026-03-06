@@ -1,6 +1,19 @@
 const USER_SCRIPT_ID = 'show_additional_message_details';
 const USER_SCRIPT_MATCHES = ['https://onlyfans.com/*', 'https://*.onlyfans.com/*'];
+const UPDATE_FEED_URL = 'https://github.com/whimsical-c4lic0/OF-DL-Auth-Helper/releases.atom';
+const RELEASES_PAGE_URL = 'https://github.com/whimsical-c4lic0/OF-DL-Auth-Helper/releases';
+const UPDATE_CHECK_ALARM_NAME = 'dailyExtensionVersionCheck';
+const UPDATE_CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000;
+const UPDATE_STORAGE_KEYS = [
+    'autoVersionCheckEnabled',
+    'lastVersionCheckAt',
+    'latestReleaseVersion',
+    'latestReleaseUrl',
+    'updateAvailable',
+    'lastVersionCheckError',
+];
 let ensureUserScriptRegisteredPromise = null;
+let versionCheckPromise = null;
 
 const USER_SCRIPT_CODE = `
 (function () {
@@ -177,6 +190,224 @@ function storeBcTokens(bcTokens) {
     chrome.storage.local.set({'bcTokens': bcTokens});
 }
 
+function storageGet(keys) {
+    return new Promise((resolve) => {
+        chrome.storage.local.get(keys, function(data) {
+            resolve(data || {});
+        });
+    });
+}
+
+function storageSet(values) {
+    return new Promise((resolve, reject) => {
+        chrome.storage.local.set(values, function() {
+            const runtimeError = chrome.runtime.lastError;
+            if (runtimeError) {
+                reject(new Error(runtimeError.message || 'Failed to write to storage'));
+                return;
+            }
+
+            resolve();
+        });
+    });
+}
+
+function storageClear() {
+    return new Promise((resolve, reject) => {
+        chrome.storage.local.clear(function() {
+            const runtimeError = chrome.runtime.lastError;
+            if (runtimeError) {
+                reject(new Error(runtimeError.message || 'Failed to clear extension storage'));
+                return;
+            }
+
+            resolve();
+        });
+    });
+}
+
+function decodeXmlEntities(value) {
+    return value
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'");
+}
+
+function normalizeVersion(rawVersion) {
+    if (!rawVersion) {
+        return null;
+    }
+
+    const cleaned = String(rawVersion).trim().replace(/^v/i, '');
+    const versionMatch = cleaned.match(/\d+(?:\.\d+)*/);
+    if (!versionMatch) {
+        return null;
+    }
+
+    const parts = versionMatch[0].split('.');
+    if (parts.some((part) => !/^\d+$/.test(part))) {
+        return null;
+    }
+
+    return parts.join('.');
+}
+
+function compareVersions(leftVersion, rightVersion) {
+    const leftParts = leftVersion.split('.').map((part) => Number(part));
+    const rightParts = rightVersion.split('.').map((part) => Number(part));
+    const maxLength = Math.max(leftParts.length, rightParts.length);
+
+    for (let i = 0; i < maxLength; i++) {
+        const leftValue = Number.isFinite(leftParts[i]) ? leftParts[i] : 0;
+        const rightValue = Number.isFinite(rightParts[i]) ? rightParts[i] : 0;
+
+        if (leftValue > rightValue) {
+            return 1;
+        }
+
+        if (leftValue < rightValue) {
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+function parseLatestReleaseFromAtom(atomXml) {
+    const firstEntryMatch = atomXml.match(/<entry\b[\s\S]*?<\/entry>/i);
+    if (!firstEntryMatch) {
+        throw new Error('No releases found in feed');
+    }
+
+    const firstEntry = firstEntryMatch[0];
+    const titleMatch = firstEntry.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+    const rawTitle = decodeXmlEntities((titleMatch?.[1] || '').replace(/<!\[CDATA\[([\s\S]*?)\]\]>/i, '$1')).trim();
+    const normalizedVersion = normalizeVersion(rawTitle);
+    if (!normalizedVersion) {
+        throw new Error('Failed to parse latest release version');
+    }
+
+    const alternateLinkMatch = firstEntry.match(/<link[^>]*rel=["']alternate["'][^>]*href=["']([^"']+)["'][^>]*\/?>/i);
+    const anyLinkMatch = firstEntry.match(/<link[^>]*href=["']([^"']+)["'][^>]*\/?>/i);
+    const releaseUrl = decodeXmlEntities(alternateLinkMatch?.[1] || anyLinkMatch?.[1] || RELEASES_PAGE_URL).trim();
+
+    return {
+        latestReleaseVersion: normalizedVersion,
+        latestReleaseUrl: releaseUrl || RELEASES_PAGE_URL,
+    };
+}
+
+async function fetchLatestReleaseInfo() {
+    const response = await fetch(UPDATE_FEED_URL, { cache: 'no-cache' });
+    if (!response.ok) {
+        throw new Error('Failed to fetch release feed: HTTP ' + response.status);
+    }
+
+    const atomXml = await response.text();
+    return parseLatestReleaseFromAtom(atomXml);
+}
+
+async function getUpdateStatus() {
+    const data = await storageGet(UPDATE_STORAGE_KEYS);
+    const currentVersion = chrome.runtime.getManifest().version;
+
+    return {
+        autoVersionCheckEnabled: data.autoVersionCheckEnabled !== false,
+        lastVersionCheckAt: typeof data.lastVersionCheckAt === 'number' ? data.lastVersionCheckAt : null,
+        latestReleaseVersion: data.latestReleaseVersion || null,
+        latestReleaseUrl: data.latestReleaseUrl || RELEASES_PAGE_URL,
+        updateAvailable: data.updateAvailable === true,
+        lastVersionCheckError: data.lastVersionCheckError || null,
+        currentVersion,
+    };
+}
+
+async function checkForNewVersion(options = {}) {
+    const { force = false } = options;
+
+    if (versionCheckPromise) {
+        return versionCheckPromise;
+    }
+
+    versionCheckPromise = (async () => {
+        const existingStatus = await getUpdateStatus();
+        const now = Date.now();
+
+        if (!force) {
+            if (!existingStatus.autoVersionCheckEnabled) {
+                return {
+                    checked: false,
+                    reason: 'disabled',
+                    status: existingStatus,
+                };
+            }
+
+            if (existingStatus.lastVersionCheckAt && (now - existingStatus.lastVersionCheckAt) < UPDATE_CHECK_INTERVAL_MS) {
+                return {
+                    checked: false,
+                    reason: 'throttled',
+                    status: existingStatus,
+                };
+            }
+        }
+
+        try {
+            const latestReleaseInfo = await fetchLatestReleaseInfo();
+            const currentVersion = normalizeVersion(chrome.runtime.getManifest().version);
+            const updateAvailable = currentVersion
+                ? compareVersions(latestReleaseInfo.latestReleaseVersion, currentVersion) > 0
+                : false;
+
+            await storageSet({
+                lastVersionCheckAt: now,
+                latestReleaseVersion: latestReleaseInfo.latestReleaseVersion,
+                latestReleaseUrl: latestReleaseInfo.latestReleaseUrl,
+                updateAvailable,
+                lastVersionCheckError: null,
+            });
+        } catch (err) {
+            console.error('Failed to check for extension updates', err);
+            await storageSet({
+                lastVersionCheckAt: now,
+                lastVersionCheckError: String(err?.message || err),
+            });
+        }
+
+        return {
+            checked: true,
+            status: await getUpdateStatus(),
+        };
+    })();
+
+    try {
+        return await versionCheckPromise;
+    } finally {
+        versionCheckPromise = null;
+    }
+}
+
+function ensureVersionCheckAlarm() {
+    if (!chrome.alarms || typeof chrome.alarms.create !== 'function') {
+        return;
+    }
+
+    chrome.alarms.create(UPDATE_CHECK_ALARM_NAME, {
+        periodInMinutes: 24 * 60,
+    });
+}
+
+async function resetExtensionData() {
+    await storageClear();
+    versionCheckPromise = null;
+    ensureVersionCheckAlarm();
+    void ensureUserScriptRegistered();
+    void checkForNewVersion();
+
+    return getUpdateStatus();
+}
+
 /**
  * Retrieve the stored bcTokens object
  * If none, return a fresh object
@@ -195,10 +426,56 @@ async function getStoredBcTokens() {
     });
 }
 
-async function handleBcToken(data) {
+async function handleRuntimeMessage(data) {
     if (data?.type === 'ensureUserScriptRegistered') {
         await ensureUserScriptRegistered();
-        return true;
+        return { ok: true };
+    }
+
+    if (data?.type === 'getUpdateStatus') {
+        return {
+            ok: true,
+            status: await getUpdateStatus(),
+        };
+    }
+
+    if (data?.type === 'setAutoVersionCheckEnabled') {
+        if (typeof data.enabled !== 'boolean') {
+            return {
+                ok: false,
+                error: '"enabled" must be true or false',
+            };
+        }
+
+        await storageSet({
+            autoVersionCheckEnabled: data.enabled,
+        });
+
+        if (data.enabled) {
+            void checkForNewVersion();
+        }
+
+        return {
+            ok: true,
+            status: await getUpdateStatus(),
+        };
+    }
+
+    if (data?.type === 'manualVersionCheck') {
+        const result = await checkForNewVersion({ force: true });
+
+        return {
+            ok: true,
+            checked: result.checked,
+            status: await getUpdateStatus(),
+        };
+    }
+
+    if (data?.type === 'clearExtensionData') {
+        return {
+            ok: true,
+            status: await resetExtensionData(),
+        };
     }
 
     if (!data || !data.bcTokenSha || !data.id) {
@@ -214,14 +491,32 @@ async function handleBcToken(data) {
     return true;
 }
 
-chrome.runtime.onMessage.addListener(handleBcToken);
+chrome.runtime.onMessage.addListener((message, _, sendResponse) => {
+    void handleRuntimeMessage(message)
+        .then((result) => {
+            sendResponse(result);
+        })
+        .catch((err) => {
+            console.error('Failed to handle runtime message', err);
+            sendResponse({
+                ok: false,
+                error: String(err?.message || err),
+            });
+        });
+
+    return true;
+});
 
 chrome.runtime.onInstalled.addListener(() => {
     void ensureUserScriptRegistered();
+    ensureVersionCheckAlarm();
+    void checkForNewVersion();
 });
 
 chrome.runtime.onStartup.addListener(() => {
     void ensureUserScriptRegistered();
+    ensureVersionCheckAlarm();
+    void checkForNewVersion();
 });
 
 if (chrome.permissions?.onAdded) {
@@ -232,4 +527,14 @@ if (chrome.permissions?.onAdded) {
     });
 }
 
+if (chrome.alarms?.onAlarm) {
+    chrome.alarms.onAlarm.addListener((alarm) => {
+        if (alarm?.name === UPDATE_CHECK_ALARM_NAME) {
+            void checkForNewVersion();
+        }
+    });
+}
+
+ensureVersionCheckAlarm();
 void ensureUserScriptRegistered();
+void checkForNewVersion();

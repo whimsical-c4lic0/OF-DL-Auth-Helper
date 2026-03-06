@@ -15,6 +15,7 @@
         "cookies",
         "clipboardWrite",
         "storage",
+        "alarms",
         "contextualIdentities"
     ],
     "optional_permissions": [
@@ -22,7 +23,8 @@
     ],
     "host_permissions": [
         "*://onlyfans.com/*",
-        "*://*.onlyfans.com/*"
+        "*://*.onlyfans.com/*",
+        "https://github.com/whimsical-c4lic0/OF-DL-Auth-Helper/*"
     ],
     "action": {
         "default_icon": {
@@ -30,6 +32,10 @@
         },
         "default_title": "OF-DL Auth Helper",
         "default_popup": "popup/cookies.html"
+    },
+    "options_ui": {
+        "page": "options/config.html",
+        "open_in_tab": true
     },
     "content_scripts": [
         {
