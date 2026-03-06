@@ -7,11 +7,9 @@ Browser extension for generating OF-DL-compatible `auth.json` values from an act
 - Generates `auth.json` with `USER_ID`, `USER_AGENT`, `X_BC`, and `COOKIE` (`auth_id` + `sess`).
 - Copy to clipboard or download directly as `auth.json`.
 - Firefox container support.
-- Optional userscript feature: shows combined video durations in chat messages with multiple videos.
-
+- Optional feature: shows video durations under PPV chat messages with multiple videos.
 
 ## Install
-
 
 ### Firefox
 
